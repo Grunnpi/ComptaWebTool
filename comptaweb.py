@@ -5,9 +5,18 @@ from selenium.webdriver.support.ui import Select
 from selenium.common.exceptions import NoSuchElementException
 import csv
 import argparse
+import re
 
 def isBlank (myString):
     return not (myString and myString.strip())
+
+class CWDetail:
+    saison = ""
+    code_structure = ""
+    montant_du = ""
+    montant_paye = ""
+    montant_solde = ""
+    url_detail = ""
 
 class JournalStructureHeader:
     saison = ""
@@ -141,67 +150,195 @@ if __name__ == "__main__":
     # Ecole Directe cred
     parser.add_argument('--user', help='ED User', type=str, required=True)
     parser.add_argument('--pwd', help='ED Password', type=str, required=True)
+    parser.add_argument('--csv', help='csv for ComptaWeb stuff', type=str, required=True)
 
     args=parser.parse_args()
 
-    driver = webdriver.Chrome('./chromedriver.exe')
-    driver.get("https://comptaweb.sgdf.fr/login")
-
-    username = driver.find_element("id", "username")
-    password = driver.find_element("id", "password")
-    submit_login = driver.find_element("id", "_submit")
-
-    username.send_keys(str(args.user))
-    password.send_keys(str(args.pwd))
-
-    submit_login.click()
-    WebDriverWait(driver, 5)
-    page_title = driver.title
-
-    assert page_title == "COMPTAWEB"
-
-    # page Depense/Recette
-    driver.get("https://comptaweb.sgdf.fr/recettedepense/creer")
-
-    ## ecriture
-    # Type de transaction
-    #
-    ligne_type_de_transaction = driver.find_element("id", "portal_bundle_frontbundle_ecriturecomptable_depenserecette")
-    ligne_libelle = driver.find_element("id", "portal_bundle_frontbundle_ecriturecomptable_libel")
-    ligne_date = driver.find_element("id", "portal_bundle_frontbundle_ecriturecomptable_dateecriture")
-    ligne_montant = driver.find_element("id", "portal_bundle_frontbundle_ecriturecomptable_montant")
-    ligne_num_piece = driver.find_element("id", "portal_bundle_frontbundle_ecriturecomptable_numeropiece")
-    ligne_mode_transaction = driver.find_element("id", "portal_bundle_frontbundle_ecriturecomptable_modetransaction") # 1 : virement
-    ligne_mode_bancaire = driver.find_element("id", "portal_bundle_frontbundle_ecriturecomptable_comptebancaire") # 1421 : notre compte
-    ligne_categorie_tier = driver.find_element("id", "portal_bundle_frontbundle_ecriturecomptable_tierscateg") # 10 : autre pas SGDF
-
-    ligne_sub_montant = driver.find_element("id", "portal_bundle_frontbundle_ecriturecomptable_ecriturecomptabledetails_0_montant")
-    ligne_sub_nature = driver.find_element("id", "portal_bundle_frontbundle_ecriturecomptable_ecriturecomptabledetails_0_nature") # 2 default
-    ligne_sub_activite = driver.find_element("id", "portal_bundle_frontbundle_ecriturecomptable_ecriturecomptabledetails_0_activite")
-    ligne_sub_branche = driver.find_element("id", "portal_bundle_frontbundle_ecriturecomptable_ecriturecomptabledetails_0_brancheprojet")
+    actionComptaWeb=False
 
 
-    # 1 : depense / 2 : recette / 3 : transfert
-    ligne_type_de_transaction.send_keys("Recette")
-    ligne_libelle.send_keys("Hello")
-    ligne_date.send_keys("01/09/2022")
-    ligne_montant.send_keys("421")
-    WebDriverWait(driver, 2)
-    ligne_num_piece.send_keys("XXX")
-    #ligne_mode_transaction.select_by_value("1")
-    #ligne_mode_bancaire.select_by_index("1421")
-    ligne_mode_bancaire.send_keys("FR7630004028370001111386894 - SGDF 305707600 - GROUPE DU PAYS THIONVILLOIS")
-    #ligne_categorie_tier.select_by_value("10")
+    # Connection à ComptaWeb
+    if (actionComptaWeb):
+        driver = webdriver.Chrome('./chromedriver.exe')
+        driver.get("https://comptaweb.sgdf.fr/login")
 
-    #ligne_sub_montant.send_keys("421")
-    #ligne_sub_nature.select_by_value("2")
-    ligne_sub_activite.send_keys("Fonctionnement") # 632083 : fonctionnement
-    ligne_sub_branche.send_keys("Groupe") # 285158 : Groupe
+        username = driver.find_element("id", "username")
+        password = driver.find_element("id", "password")
+        submit_login = driver.find_element("id", "_submit")
 
-    ligne_creer = driver.find_element("id", "portal_bundle_frontbundle_ecriturecomptable_submit")
+        username.send_keys(str(args.user))
+        password.send_keys(str(args.pwd))
 
-    ligne_creer.click()
-    WebDriverWait(driver, 5)
+        submit_login.click()
+        WebDriverWait(driver, 5)
+        page_title = driver.title
 
-    print('Ok fin')
-    #driver.close()
+        assert page_title == "COMPTAWEB"
+
+    # pour chaque ligne du fichier, on check si Recette ou Dépense (le reste on skip)
+    with open(str(args.csv), 'r', encoding='utf-8') as read_obj:
+        # pass the file object to reader() to get the reader object
+        csv_reader=csv.reader(read_obj,delimiter=',')
+        # Iterate over each row in the csv using reader object
+        for row in csv_reader:
+            ligneACreer=False
+            if (len(row) > 4):
+                if ( row[0].find("/2022") != -1 and row[2].find("Solde initial") == -1 ):
+
+                    val_date=row[0]
+                    val_ref=row[6]
+                    val_libelle=row[7]
+
+                    if ( row[3] != '' and row[3] !='0,00 €' ):
+                        #print("WARN Débit")
+#                        print(row)
+                        val_type_de_transaction='Dépense'
+                        val_montant=row[3]
+                        ligneACreer=True
+                    else:
+                        if ( row[4] != '' and row[4] !='0,00 €' ):
+                            #print("DEBUG Crédit")
+                            #                            print(row)
+                            val_type_de_transaction='Recette'
+                            val_montant=row[4]
+                            ligneACreer=True
+                        else:
+                            print("ERROR Inconnu")
+                            print(row)
+                            ligneACreer=False
+
+                if (ligneACreer):
+                    # clean du montant
+                    val_montant=val_montant.replace(' €','')
+
+                    if (actionComptaWeb):
+                        # page Depense/Recette
+                        driver.get("https://comptaweb.sgdf.fr/recettedepense/creer")
+
+                        ## ecriture
+                        # Type de transaction
+                        #
+                        ligne_type_de_transaction = driver.find_element("id", "portal_bundle_frontbundle_ecriturecomptable_depenserecette")
+                        ligne_libelle = driver.find_element("id", "portal_bundle_frontbundle_ecriturecomptable_libel")
+                        ligne_date = driver.find_element("id", "portal_bundle_frontbundle_ecriturecomptable_dateecriture")
+                        ligne_montant = driver.find_element("id", "portal_bundle_frontbundle_ecriturecomptable_montant")
+                        ligne_num_piece = driver.find_element("id", "portal_bundle_frontbundle_ecriturecomptable_numeropiece")
+                        ligne_mode_transaction = driver.find_element("id", "portal_bundle_frontbundle_ecriturecomptable_modetransaction") # 1 : virement
+                        ligne_mode_bancaire = driver.find_element("id", "portal_bundle_frontbundle_ecriturecomptable_comptebancaire") # 1421 : notre compte
+                        ligne_categorie_tier = driver.find_element("id", "portal_bundle_frontbundle_ecriturecomptable_tierscateg") # 10 : autre pas SGDF
+
+                        ligne_sub_montant = driver.find_element("id", "portal_bundle_frontbundle_ecriturecomptable_ecriturecomptabledetails_0_montant")
+                        ligne_sub_nature = driver.find_element("id", "portal_bundle_frontbundle_ecriturecomptable_ecriturecomptabledetails_0_nature") # 2 default
+                        ligne_sub_activite = driver.find_element("id", "portal_bundle_frontbundle_ecriturecomptable_ecriturecomptabledetails_0_activite")
+                        ligne_sub_branche = driver.find_element("id", "portal_bundle_frontbundle_ecriturecomptable_ecriturecomptabledetails_0_brancheprojet")
+
+
+                        # 1 : depense / 2 : recette / 3 : transfert
+                        ligne_type_de_transaction.send_keys(val_type_de_transaction)
+                        WebDriverWait(driver, 2)
+                        ligne_libelle.send_keys(val_libelle)
+                        ligne_date.send_keys(val_date)
+                        ligne_montant.send_keys(val_montant)
+                        WebDriverWait(driver, 2)
+                        ligne_num_piece.send_keys(val_ref)
+
+                        # a changer si espece ou bancaire
+                        #ligne_mode_transaction.select_by_value("1")
+                        ligne_mode_bancaire.send_keys("FR7630004028370001111386894 - SGDF 305707600 - GROUPE DU PAYS THIONVILLOIS")
+
+                        #ligne_categorie_tier.select_by_value("10")
+
+                    # préparation ventilation
+                    tab_ref = []
+
+                    tab_montant = []
+                    tab_nature = []
+                    tab_activite = []
+                    tab_branche = []
+
+                    tab_tag = []
+
+                    # Est-ce une ligne a fonction multiple ?
+                    if ( val_ref.find("\\") != -1 ):
+                        # gestion du split
+                        tab_ref = val_ref.split("\\")
+                        tab_tag = val_libelle.split("\\")
+                    else:
+                        tab_ref.append(val_ref)
+                        tab_tag.append(val_libelle)
+
+                    # cleanup pour n'avoir que le tag
+                    for idx, un_tag in enumerate(tab_tag):
+                        try:
+                            the_tag = re.search('#(.{2}?)', un_tag).group(1)
+                            tab_tag[idx] = the_tag
+                            # print(un_tag + " >>>>>>>>> " + str(the_tag))
+                        except AttributeError:
+                            tab_tag[idx] = "NO_TAG"
+                            pass
+                    # gestion REF par REF
+                    # debug
+                    print("ERROR [" + val_type_de_transaction + ']/[' + val_date + ']/[' + val_libelle + ']/[' + val_montant + ']/[' + val_ref + ']')
+
+                    for idx, une_ref in enumerate(tab_ref):
+                        if ( len(tab_ref) == len(tab_tag)):
+                            val_tag = tab_tag[idx]
+                        else:
+                            if (len(tab_ref) > len(tab_tag)):
+                                val_tag = tab_tag[min(idx,len(tab_tag)-1)]
+                            else:
+                                val_tag = "NO_TAG"
+
+                        # voir pour faire defiler les lignes ...
+                        val_nature="Participation Activités"
+                        val_activite="Fonctionnement"
+                        val_branche="Groupe"
+                        if (une_ref.startswith("VEN-")):
+                            val_nature="Vente article boutique"
+                            val_activite="Tenue"
+                        if (une_ref.startswith("ADH-")):
+                            val_nature="Cotisations SGDF"
+                            val_activite="Adhésion-National"
+                        if (une_ref.startswith("WE-")):
+                            val_nature="Participation Activités"
+                            val_activite="Week-end"
+                        if (une_ref.startswith("LBS-")):
+                            val_nature="Achat destiné à la revente"
+                            val_activite="Tenue"
+                        if (une_ref.startswith("BNP-")):
+                            val_nature="Frais Bancaires"
+                            val_activite="Fonctionnement"
+
+                        # voir pour choper le tag dans l'ordre
+                        if (val_tag == "FA"):
+                            val_branche="Farfadets"
+                        if (val_tag == "LJ"):
+                            val_branche="Louveteaux-Jeannettes"
+                        if (val_tag == "SG"):
+                            val_branche="Scouts-Guides"
+                        if (val_tag == "PC"):
+                            val_branche="Pionniers-Caravelles"
+                        if (val_tag == "GP"):
+                            val_branche="Groupe"
+                        if (val_tag == "NO_TAG"):
+                            val_branche="Groupe"
+
+                        print("*WARN [" + val_tag + ']/[' + val_nature + ']/[' + val_activite + ']/[' + val_branche + ']')
+
+                    if (actionComptaWeb):
+                        #ligne_sub_montant.send_keys("421")
+                        ligne_sub_nature.send_keys(val_nature)
+                        ligne_sub_activite.send_keys(val_activite)
+                        ligne_sub_branche.send_keys(val_branche)
+
+                        ligne_sub_creer = driver.find_element("id", "ajout_detail")
+                        ligne_sub_creer.click()
+
+                        ligne_creer = driver.find_element("id", "portal_bundle_frontbundle_ecriturecomptable_submit")
+                        #ligne_creer.click()
+                        WebDriverWait(driver, 5)
+                        #exit(-1)
+    exit(-1)
+
+print('Ok fin')
+#driver.close()
