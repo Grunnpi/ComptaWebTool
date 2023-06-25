@@ -469,9 +469,9 @@ if __name__ == "__main__":
 
 
                         # boucle sur les sous lignes
-                        print(">WARN [" + val_type_de_transaction + ']/[' + val_date + ']/[' + val_libelle + ']/[' + str(val_decimal_montant) + ']/[' + val_ref + ']')
+                        print(">INFO [" + val_type_de_transaction + ']/[' + val_date + ']/[' + val_libelle + ']/[' + str(val_decimal_montant) + ']/[' + val_ref + ']')
                         for idx,un_ComptaWebDetail in enumerate(tab_ComptaWebDetail):
-                            print("*WARN [" + str(un_ComptaWebDetail.montant) + ']/[' + un_ComptaWebDetail.nature + ']/[' + un_ComptaWebDetail.activite + ']/[' + un_ComptaWebDetail.branche + ']')
+                            print("*INFO [" + str(un_ComptaWebDetail.montant) + ']/[' + un_ComptaWebDetail.nature + ']/[' + un_ComptaWebDetail.activite + ']/[' + un_ComptaWebDetail.branche + ']')
 
                         if (actionComptaWeb):
                             # page Depense/Recette
