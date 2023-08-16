@@ -243,7 +243,7 @@ if __name__ == "__main__":
     args=parser.parse_args()
 
     actionComptaWeb=True
-    actionComptaWebCreationLigne=True
+    actionComptaWebCreationLigne=True # si False, simulation seulement
 
 
     # Connection à ComptaWeb
@@ -381,6 +381,10 @@ if __name__ == "__main__":
                             if (not ref_trouvee and une_ref.startswith("WE-")):
                                 val_nature="Participation Activités"
                                 val_activite="Week-end"
+                                ref_trouvee=True
+                            if (not ref_trouvee and une_ref.startswith("CAMP-")):
+                                val_nature="Participation Activités"
+                                val_activite="Camps"
                                 ref_trouvee=True
                             if (not ref_trouvee and une_ref.startswith("LBS-")):
                                 val_nature="Achat destiné à la revente"
