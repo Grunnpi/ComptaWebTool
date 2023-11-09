@@ -277,8 +277,8 @@ if __name__ == "__main__":
                     val_date=row[0]
                     val_date2=row[1]
                     val_description_bnp=row[2]
-                    val_ref=row[6]
-                    val_libelle=row[7]
+                    val_ref=row[7]
+                    val_libelle=row[8]
 
                     if ( row[3] != '' and row[3] !='0,00 €' ):
                         #print("WARN Débit")
@@ -394,7 +394,7 @@ if __name__ == "__main__":
                                 val_nature="Frais Bancaires"
                                 val_activite="Fonctionnement"
                                 ref_trouvee=True
-                            if (not ref_trouvee and une_ref.startswith("CALENDRIERS-")):
+                            if (not ref_trouvee and ( une_ref.startswith("CALENDRIERS-") or une_ref.startswith("CALENDRIER-")) ):
                                 val_nature="Dons, calendriers (sans reçu fiscal)"
                                 val_activite="Calendriers"
                                 ref_trouvee=True
