@@ -292,7 +292,7 @@ if __name__ == "__main__":
                             val_montant=row[4]
                             ligneACreer=True
                         else:
-                            print("ERROR ligne inconnue (ni Recette/ni Dépense)")
+                            print("ERROR ligne inconnue (ni Recette/ni Dépense) {" + str(row) + "}")
                             print(row)
                             ligneACreer=False
 
@@ -382,6 +382,10 @@ if __name__ == "__main__":
                                 val_nature="Participation Activités"
                                 val_activite="Week-end"
                                 ref_trouvee=True
+                                if (une_ref.find("INTENDANCE") != -1):
+                                    val_nature="Alimentation, Intendance"
+                                    ref_trouvee=True
+
                             if (not ref_trouvee and une_ref.startswith("CAMP-")):
                                 val_nature="Participation Activités"
                                 val_activite="Camps"
@@ -392,6 +396,10 @@ if __name__ == "__main__":
                                 ref_trouvee=True
                             if (not ref_trouvee and une_ref.startswith("BNP-")):
                                 val_nature="Frais Bancaires"
+                                val_activite="Fonctionnement"
+                                ref_trouvee=True
+                            if (not ref_trouvee and une_ref.startswith("MATOS-")):
+                                val_nature="Achat Petit Matériel"
                                 val_activite="Fonctionnement"
                                 ref_trouvee=True
                             if (not ref_trouvee and ( une_ref.startswith("CALENDRIERS-") or une_ref.startswith("CALENDRIER-")) ):
@@ -416,6 +424,8 @@ if __name__ == "__main__":
                                     tab_ComptaWebDetail.append(un_ComptaWebDetail)
 
                             if (not ref_trouvee):
+                                print("WARN : pas de catégorie auto :( [" + val_tag + "] {" + str(row) + "}" )
+                                val_libelle = "FIXME " + val_libelle
                                 un_ComptaWebDetail = ComptaWebDetail(0,val_nature,val_activite,val_branche)
                                 tab_ComptaWebDetail.append(un_ComptaWebDetail)
 
@@ -465,7 +475,7 @@ if __name__ == "__main__":
                                 for idx,un_ComptaWebDetail in enumerate(tab_ComptaWebDetail):
                                     un_ComptaWebDetail.montant = un_ComptaWebDetail.montant_test
                             else:
-                                print("ERROR : pas de ventilation auto :(")
+                                print("ERROR : pas de ventilation auto :( [" + val_tag + "]")
                                 val_libelle = "FIXME " + val_libelle
                                 tab_ComptaWebDetail[0].montant = val_decimal_montant
                         else:
@@ -511,10 +521,18 @@ if __name__ == "__main__":
                             # colonne BNP = "PAIEMENT C. PROC PTTFWNMVV" == carte procurement
                             # label = "B@" == remise de chèques
                             # 2eme colonne == "Caisse de Groupe" ou "Caisse Pionniers Caravelles"
-                            if ( val_description_bnp.find("PAIEMENT C. PROC PTTFWNMVV") != -1 ):
+                            if ( val_description_bnp.find("PAIEMENT C. PROC PBE41DTPE") != -1 ):
                                 ligne_mode_transaction.send_keys("Carte procurement")
                                 WebDriverWait(driver, 2)
-                                ligne_carteprocurement.send_keys("Carte du groupe")
+                                ligne_carteprocurement.send_keys("Carte Magali Grunnagel")
+                            elif ( val_description_bnp.find("PAIEMENT C. PROC PTTFWNMVV") != -1 ):
+                                ligne_mode_transaction.send_keys("Carte procurement")
+                                WebDriverWait(driver, 2)
+                                ligne_carteprocurement.send_keys("Carte Magali Grunnagel")
+                            elif ( val_description_bnp.find("PAIEMENT C. PROC PLIDVQSRM") != -1 ):
+                                ligne_mode_transaction.send_keys("Carte procurement")
+                                WebDriverWait(driver, 2)
+                                ligne_carteprocurement.send_keys("Carte Jean-Louis Maire")
                             elif ( val_libelle.startswith("B@")):
                                 ligne_mode_transaction.send_keys("Chèque")
                                 ligne_mode_bancaire.send_keys("FR7630004028370001111386894 - SGDF 305707600 - GROUPE DU PAYS THIONVILLOIS")

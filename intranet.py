@@ -288,22 +288,21 @@ if __name__ == "__main__":
 
     parser.add_argument('--user', help='ED User', type=str, required=True)
     parser.add_argument('--pwd', help='ED Password', type=str, required=True)
+    parser.add_argument('--csv', help='csv for Intranet stuff', type=str, required=True)
 
     args=parser.parse_args()
 
-    options=webdriver.ChromeOptions()
     prefs={"download.default_directory":"C:\Temp"}
-    options.add_experimental_option("prefs", prefs)
-    driver=webdriver.Chrome(executable_path='./chromedriver100.0.4896.60.exe', chrome_options=options);
+    driver = webdriver.Chrome('./chromedriver.exe')
 
     connection_intranet=True
 
     if (connection_intranet):
         driver.get("https://intranet.sgdf.fr/Specialisation/Sgdf/Default.aspx")
 
-        username = driver.find_element("id", "login")
+        username = driver.find_element("id", "username")
         password = driver.find_element("id", "password")
-        submit_login = driver.find_element("id", "_btnValider")
+        submit_login = driver.find_element("id", "kc-login")
 
         username.send_keys(str(args.user))
         password.send_keys(str(args.pwd))
@@ -314,12 +313,31 @@ if __name__ == "__main__":
 
         assert page_title == "Intranet SGDF - Accueil"
 
+        # info qui viennent du CSV
+        personne_nom = "LANGNEBLE"
+        personne_prenom = "Kossi"
+
+
+        # inscription en tant qu'invité seulement : validation vers adhèrent manuelle
+        driver.get("https://intranet.sgdf.fr/Specialisation/Sgdf/adherents/InscrireInvite.aspx")
+
+        case_recherche_nom = driver.find_element("id", "ctl00_MainContent__recherche__tbNom")
+        case_recherche_prenom = driver.find_element("id", "ctl00_MainContent__recherche__tbPrenom")
+        bouton_recherche = driver.find_element("id", "ctl00_MainContent__recherche__btnRechercher")
+
+        case_recherche_nom.send_keys(personne_nom)
+        case_recherche_prenom.send_keys(personne_prenom)
+        bouton_recherche.click()
+
+
+
+
         # fonction ?
         # extractionRegistrePresence("2021-2022","Trimestre 2 (J-F-M)","T2")
-        extractionRegistrePresence("2021-2022","Trimestre 3 (A-M-J)","T3")
+        # extractionRegistrePresence("2021-2022","Trimestre 3 (A-M-J)","T3")
 
     # lectureFichierRegistrePresence("sboubT2.csv")
-    lectureFichierRegistrePresence("sboubT3.csv")
+    # lectureFichierRegistrePresence("sboubT3.csv")
 
     print('Ok fin')
     # driver.close()
