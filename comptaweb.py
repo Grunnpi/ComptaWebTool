@@ -158,21 +158,21 @@ def comptaWebDetail_toutes_les_combinaisons(index_debut, tab_ComptaWebDetail, ta
         # on est au fond de la liste
         nature_reconnue=False
         un_ComptaWebDetail = tab_ComptaWebDetail[index_debut]
-        if (un_ComptaWebDetail.nature == "Cotisations SGDF" and un_ComptaWebDetail.branche != "Groupe" ):
+        if (un_ComptaWebDetail.nature == "Cotisations SGDF" ): #and un_ComptaWebDetail.branche != "Groupe"
             nature_reconnue=True
             for idx_possible_cotisation,une_possible_cotisation in enumerate(possible_cotisation):
                 une_combinaison = []
                 une_combinaison.append(une_possible_cotisation)
                 tab_toutes_les_combinaisons.append(une_combinaison)
-        if (un_ComptaWebDetail.nature == "Cotisations SGDF" and un_ComptaWebDetail.branche == "Groupe" ):
-            nature_reconnue=True
-            une_combinaison = []
-            une_combinaison.append(Decimal("24.0"))
-            tab_toutes_les_combinaisons.append(une_combinaison)
+        #if (un_ComptaWebDetail.nature == "Cotisations SGDF" and un_ComptaWebDetail.branche == "Groupe" ):
+            #    nature_reconnue=True
+            #une_combinaison = []
+            #une_combinaison.append(Decimal("24.0"))
+            #tab_toutes_les_combinaisons.append(une_combinaison)
         if (un_ComptaWebDetail.nature == "Participation frais de Fonctionnement"):
             nature_reconnue=True
             une_combinaison = []
-            une_combinaison.append(Decimal("25.0"))
+            une_combinaison.append(Decimal("20.0"))
             tab_toutes_les_combinaisons.append(une_combinaison)
         if (un_ComptaWebDetail.nature == "Vente article boutique"):
             nature_reconnue=True
@@ -198,21 +198,21 @@ def comptaWebDetail_toutes_les_combinaisons(index_debut, tab_ComptaWebDetail, ta
         tab_toutes_les_combinaisons_avant = tab_toutes_les_combinaisons.copy()
         tab_toutes_les_combinaisons.clear()
         for une_combinaison in tab_toutes_les_combinaisons_avant:
-            if (un_ComptaWebDetail.nature == "Cotisations SGDF" and un_ComptaWebDetail.branche != "Groupe" ):
+            if (un_ComptaWebDetail.nature == "Cotisations SGDF" ): #and un_ComptaWebDetail.branche != "Groupe"
                 nature_reconnue=True
                 for idx_possible_cotisation,une_possible_cotisation in enumerate(possible_cotisation):
                     une_combinaison_argrandie = une_combinaison.copy()
                     une_combinaison_argrandie.append(une_possible_cotisation)
                     tab_toutes_les_combinaisons.append(une_combinaison_argrandie)
-            if (un_ComptaWebDetail.nature == "Cotisations SGDF" and un_ComptaWebDetail.branche == "Groupe" ):
-                nature_reconnue=True
-                une_combinaison_argrandie = une_combinaison.copy()
-                une_combinaison_argrandie.append(Decimal("24.0"))
-                tab_toutes_les_combinaisons.append(une_combinaison_argrandie)
+            #if (un_ComptaWebDetail.nature == "Cotisations SGDF" and un_ComptaWebDetail.branche == "Groupe" ):
+                #    nature_reconnue=True
+                #une_combinaison_argrandie = une_combinaison.copy()
+                #une_combinaison_argrandie.append(Decimal("20.0"))
+            #tab_toutes_les_combinaisons.append(une_combinaison_argrandie)
             if (un_ComptaWebDetail.nature == "Participation frais de Fonctionnement"):
                 nature_reconnue=True
                 une_combinaison_argrandie = une_combinaison.copy()
-                une_combinaison_argrandie.append(Decimal("25.0"))
+                une_combinaison_argrandie.append(Decimal("20.0"))
                 tab_toutes_les_combinaisons.append(une_combinaison_argrandie)
             if (un_ComptaWebDetail.nature == "Vente article boutique"):
                 nature_reconnue=True
@@ -398,6 +398,10 @@ if __name__ == "__main__":
                                 val_nature="Frais Bancaires"
                                 val_activite="Fonctionnement"
                                 ref_trouvee=True
+                            if (not ref_trouvee and une_ref.startswith("CAVE-")):
+                                val_nature="Achat Petit Matériel"
+                                val_activite="Fonctionnement"
+                                ref_trouvee=True
                             if (not ref_trouvee and une_ref.startswith("MATOS-")):
                                 val_nature="Achat Petit Matériel"
                                 val_activite="Fonctionnement"
@@ -433,13 +437,16 @@ if __name__ == "__main__":
                         # estimation de la ventilation en fonction de la composition
                         if (len(tab_ComptaWebDetail) > 1):
 
-                            possible_cotisation = [Decimal("140.0"), Decimal("105.0"), Decimal("59.0"), Decimal("24.0")]
+                            # liste des cotistations nationales par QF
+                            possible_cotisation = [Decimal("160.0"),Decimal("146.0"), Decimal("109.0"), Decimal("71.0"), Decimal("24.0"), Decimal("10.0")]
                             idx_possible_cotisation = 0
 
-                            possible_achat_revente = [Decimal("47.0"),Decimal("42.0"),Decimal("36.0"),Decimal("5.0")]
+                            # tenue complete, sans foulard, foulard seul
+                            possible_achat_revente = [Decimal("49.0"),Decimal("44.0"),Decimal("5.0")]
                             idx_possible_achat_revente = 0
 
-                            possible_participation_activitee = [Decimal("15.0"),Decimal("13.0"),Decimal("10.0")]
+                            # participation aux WE classique
+                            possible_participation_activitee = [Decimal("7.0"),Decimal("5.0")]
                             idx_possible_participation_activitee = 0
 
                             tab_toutes_les_combinaisons = []
@@ -475,7 +482,7 @@ if __name__ == "__main__":
                                 for idx,un_ComptaWebDetail in enumerate(tab_ComptaWebDetail):
                                     un_ComptaWebDetail.montant = un_ComptaWebDetail.montant_test
                             else:
-                                print("ERROR : pas de ventilation auto :( [" + val_tag + "]")
+                                print("ERROR : pas de ventilation auto :( [" + val_tag + "]/(" + str(val_decimal_montant) + "€)",row)
                                 val_libelle = "FIXME " + val_libelle
                                 tab_ComptaWebDetail[0].montant = val_decimal_montant
                         else:
