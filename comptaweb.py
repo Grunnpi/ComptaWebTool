@@ -11,6 +11,8 @@ import argparse
 import re
 from decimal import Decimal
 import time
+import os
+
 
 def isBlank (myString):
     return not (myString and myString.strip())
@@ -248,7 +250,18 @@ if __name__ == "__main__":
 
     # Connection à ComptaWeb
     if (actionComptaWeb):
-        driver = webdriver.Chrome('./chromedriver.exe')
+        options = webdriver.ChromeOptions()
+
+        current_working_directory = os.getcwd()
+        chromedriver_path = current_working_directory + '\\chromedriver.exe'
+        print(chromedriver_path)
+        options.binary_location = chromedriver_path
+        options.add_argument("--log-path=./chromium.log")
+        options.add_argument("--no-sandbox")
+
+        driver = webdriver.Chrome(options=options)
+
+        #driver = webdriver.Chrome('./chromedriver.exe')
         driver.get("https://comptaweb.sgdf.fr/login")
 
         username = driver.find_element("id", "username")
