@@ -293,7 +293,7 @@ if __name__ == "__main__":
     args=parser.parse_args()
 
     prefs={"download.default_directory":"C:\Temp"}
-    driver = webdriver.Chrome('./chromedriver.exe')
+    driver = webdriver.Chrome('./sboub_chromedriver.exe')
 
     connection_intranet=True
 

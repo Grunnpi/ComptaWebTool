@@ -12,6 +12,8 @@ import re
 from decimal import Decimal
 import time
 import os
+from selenium.webdriver.chrome.service import Service as ChromeService
+from webdriver_manager.chrome import ChromeDriverManager
 
 
 def isBlank (myString):
@@ -233,6 +235,9 @@ def comptaWebDetail_toutes_les_combinaisons(index_debut, tab_ComptaWebDetail, ta
                 une_combinaison_argrandie.append(Decimal("-1.0"))
                 tab_toutes_les_combinaisons.append(une_combinaison_argrandie)
 
+
+
+
 ######################
 if __name__ == "__main__":
     parser=argparse.ArgumentParser(description='Ecole Direct extact process')
@@ -253,15 +258,16 @@ if __name__ == "__main__":
         options = webdriver.ChromeOptions()
 
         current_working_directory = os.getcwd()
-        chromedriver_path = current_working_directory + '\\chromedriver.exe'
+        chromedriver_path = current_working_directory #+ '\\sboub_chromedriver.exe'
         print(chromedriver_path)
         options.binary_location = chromedriver_path
         options.add_argument("--log-path=./chromium.log")
         options.add_argument("--no-sandbox")
 
-        driver = webdriver.Chrome(options=options)
+        driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()))
+        #driver = webdriver.Chrome(options=options)
 
-        #driver = webdriver.Chrome('./chromedriver.exe')
+        #driver = webdriver.Chrome('./sboub_chromedriver.exe')
         driver.get("https://comptaweb.sgdf.fr/login")
 
         username = driver.find_element("id", "username")
